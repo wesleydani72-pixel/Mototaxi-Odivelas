@@ -1,10 +1,10 @@
 {
-  "projectId": "windy-falcon-dj1d7",
-  "appId": "1:182358612475:web:9a9f079711185a98a3535e",
-  "apiKey": "AIzaSyDLOFS81wvpOFr8ZyY9UW8eSSqVctbZPDo",
-  "authDomain": "windy-falcon-dj1d7.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-mototxi-b271c9a0-77fe-4368-87d5-ff2a28d8779a",
-  "storageBucket": "windy-falcon-dj1d7.firebasestorage.app",
-  "messagingSenderId": "182358612475",
-  "measurementId": ""
+  "projectId": "mototaxi-odivelas",
+  "appId": "1:5663090732:web:5142256cbf32102a298989",
+  "apiKey": "AIzaSyCzrekgDMQ3k-qGmcnhe_oid6tmqu8-SUY",
+  "authDomain": "mototaxi-odivelas.firebaseapp.com",
+  "firestoreDatabaseId": "",
+  "storageBucket": "mototaxi-odivelas.firebasestorage.app",
+  "messagingSenderId": "5663090732",
+  "measurementId": "G-HMBFYP32SZ"
 }
