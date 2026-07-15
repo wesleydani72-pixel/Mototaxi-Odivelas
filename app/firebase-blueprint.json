@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profiles for clients, drivers, and admins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "mototaxista", "cliente"] },
+        "nome": { "type": "string" },
+        "email": { "type": "string" },
+        "telefone": { "type": "string" },
+        "senha": { "type": "string" },
+        "status": { "type": "string" },
+        "passwordCreated": { "type": "boolean" },
+        "foto": { "type": "string" },
+        "criadoEm": { "type": "string" }
+      },
+      "required": ["id", "role", "nome"]
+    },
+    "Ride": {
+      "title": "Ride",
+      "description": "Details of a motorcycle taxi ride request and state",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clienteId": { "type": "string" },
+        "clienteNome": { "type": "string" },
+        "clienteFoto": { "type": "string" },
+        "clienteTelefone": { "type": "string" },
+        "origem": { "type": "string" },
+        "refOrigem": { "type": "string" },
+        "destino": { "type": "string" },
+        "distanciaKm": { "type": "number" },
+        "tempoEstimadoMin": { "type": "number" },
+        "valorEstimado": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "clienteId", "clienteNome", "origem", "destino", "valorEstimado", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System and ride updates sent to users or roles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "destinatarioId": { "type": "string" },
+        "destinatarioRole": { "type": "string" },
+        "mensagem": { "type": "string" },
+        "lida": { "type": "boolean" },
+        "dataHora": { "type": "string" }
+      },
+      "required": ["id", "mensagem", "lida"]
+    },
+    "Log": {
+      "title": "Log",
+      "description": "System audit logs for tracing actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userRole": { "type": "string" },
+        "acao": { "type": "string" },
+        "detalhe": { "type": "string" },
+        "dataHora": { "type": "string" }
+      },
+      "required": ["id", "userId", "userName", "acao", "dataHora"]
+    },
+    "Config": {
+      "title": "Config",
+      "description": "System wide configuration",
+      "type": "object",
+      "properties": {
+        "tarifaBase": { "type": "number" },
+        "precoKm": { "type": "number" },
+        "taxaAdminPercentual": { "type": "number" },
+        "raioBuscaKm": { "type": "number" },
+        "cidadePadrao": { "type": "string" }
+      }
+    },
+    "Relatorio": {
+      "title": "Relatorio",
+      "description": "Daily summary report of rides, finished, and canceled",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "data": { "type": "string" },
+        "total_corridas": { "type": "number" },
+        "total_canceladas": { "type": "number" },
+        "total_finalizadas": { "type": "number" },
+        "valor_total": { "type": "number" },
+        "taxa_total": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "data", "total_corridas", "valor_total", "status"]
+    },
+    "Mensagem": {
+      "title": "Mensagem",
+      "description": "Real-time message between driver and passenger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "id_corrida": { "type": "string" },
+        "id_remetente": { "type": "string" },
+        "nome_remetente": { "type": "string" },
+        "texto": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id_corrida", "id_remetente", "texto", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "The users collection"
+    },
+    "/rides/{rideId}": {
+      "schema": "Ride",
+      "description": "The rides collection"
+    },
+    "/notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "The notifications collection"
+    },
+    "/logs/{logId}": {
+      "schema": "Log",
+      "description": "The system logs collection"
+    },
+    "/config/{configId}": {
+      "schema": "Config",
+      "description": "The configuration collection"
+    },
+    "/relatorios/{relatorioId}": {
+      "schema": "Relatorio",
+      "description": "The daily reports collection"
+    },
+    "/mensagens/{mensagemId}": {
+      "schema": "Mensagem",
+      "description": "The messages collection"
+    }
+  }
+}
