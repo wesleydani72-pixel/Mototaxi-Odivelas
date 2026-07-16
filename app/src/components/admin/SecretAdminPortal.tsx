@@ -12,82 +12,85 @@ export function SecretAdminPortal() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Allowed administrator emails (wesleydani72@gmail.com as specified, and jl6568402@gmail.com so the testing account can access)
+  // E-mails autorizados para acesso administrativo
   const allowedEmails = ['wesleydani72@gmail.com', 'jl6568402@gmail.com'];
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    loading(true);
 
     const emailClean = emailInput.toLowerCase().trim();
     const isEmailAllowed = allowedEmails.includes(emailClean);
 
-    // Validate email
+    // Validar e-mail de administrador
     if (!isEmailAllowed) {
       setError('Acesso negado: Seu e-mail não tem autorização para acessar esta área secreta.');
-      setLoading(false);
-      // Block and redirect back to home page after 3 seconds
+      loading(false);
       setTimeout(() => {
         navigate('/');
       }, 3000);
       return;
     }
 
-    // Secure administrative passwords allowed
+    // Senhas mestras aceitas no portal de segurança
     const correctPasswords = ['W&sl&y194080', 'WesleyAdmin2026', 'WesleyMotoTaxiAdmin72'];
     const isPasswordCorrect = correctPasswords.includes(passwordInput.trim());
 
     if (!isPasswordCorrect) {
       setError('Acesso negado: Senha mestra de administrador incorreta.');
-      setLoading(false);
-      // Block and redirect back to home page after 3 seconds
+      loading(false);
       setTimeout(() => {
         navigate('/');
       }, 3000);
       return;
     }
 
-    // Success! Log the admin in
+    // Sucesso! Autenticar o administrador correto
     setSuccess(true);
     
-    // Create/retrieve admin user details
-    const adminId = emailClean === 'wesleydani72@gmail.com' ? 'admin_wesley' : 'admin_1';
-    const adminNome = emailClean === 'wesleydani72@gmail.com' ? 'Wesley Pereira Ferreira' : 'Administrador Geral';
+    // Identificar dinamicamente os dados corretos de perfil para o painel
+    const isWesley = emailClean === 'wesleydani72@gmail.com';
+    const adminId = isWesley ? 'admin_wesley' : 'admin_1';
+    const adminNome = isWesley ? 'Wesley Pereira Ferreira' : 'Administrador Geral';
     
+    // Se for o Wesley, podemos definir dados personalizados de perfil
     const adminUser = {
       id: adminId,
       role: 'admin' as const,
       nome: adminNome,
       email: emailClean,
-      telefone: '(11) 99999-0000',
+      telefone: isWesley ? '(11) 99999-0000' : '(11) 99999-0000',
       senha: passwordInput.trim(),
       status: 'ativo' as const,
       passwordCreated: true,
-      foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+      // Se for o Wesley, você pode adicionar a sua foto real aqui depois se quiser!
+      foto: isWesley 
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' // Imagem alternativa/sua
+        : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
       criadoEm: '2026-06-01',
     };
 
     setTimeout(() => {
-      // Persist session key
+      // Gravar sessão ativa no navegador
       localStorage.setItem('mototaxi_logged_session_id', adminUser.id);
       
-      // Update AuthContext user state & unlock admin
+      // Atualizar o estado global do aplicativo com as credenciais limpas
       atualizarUsuarioLogado(adminUser);
       setSecretAdminUnlocked(true);
       
       setLoading(false);
-      navigate('/'); // Redirect to home, which will now show the AdminDashboard
+      navigate('/'); // Redireciona para a página inicial atualizada com o painel correto
     }, 1000);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-4 overflow-y-auto">
-      {/* Background decoration */}
+      {/* Decoração de fundo */}
       <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#facc15_1px,transparent_1px)] [background-size:16px_16px]" />
       
       <div className="bg-slate-900 border border-slate-800 rounded-[32px] p-8 max-w-md w-full shadow-2xl relative z-10 space-y-8 animate-fade-in">
-        {/* Header */}
+        {/* Cabeçalho */}
         <div className="text-center space-y-3">
           <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
             <Shield className="w-8 h-8" />
@@ -98,7 +101,7 @@ export function SecretAdminPortal() {
           </div>
         </div>
 
-        {/* Error Notification */}
+        {/* Notificação de Erro */}
         {error ? (
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex gap-3 text-left animate-shake">
             <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
@@ -125,10 +128,10 @@ export function SecretAdminPortal() {
           </div>
         )}
 
-        {/* Login Form */}
+        {/* Formulário de Login */}
         {!success && !error && (
           <form onSubmit={handleVerify} className="space-y-5">
-            {/* Email Field */}
+            {/* Campo de E-mail */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
                 E-mail de Administrador
@@ -147,7 +150,7 @@ export function SecretAdminPortal() {
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Campo de Senha */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
                 Senha Mestra de Administrador
@@ -187,7 +190,7 @@ export function SecretAdminPortal() {
           </form>
         )}
 
-        {/* Loading / Redirect state after error or success */}
+        {/* Estado de Carregamento */}
         {(loading || success || error) && (
           <div className="flex flex-col items-center justify-center py-4 space-y-3">
             <div className={`w-6 h-6 border-2 ${error ? 'border-red-500' : 'border-amber-500'} border-t-transparent rounded-full animate-spin`} />
