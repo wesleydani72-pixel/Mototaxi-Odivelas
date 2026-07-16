@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Se for o seu novo e-mail e ele ainda não estiver no banco local, criamos o 'admin_wesley'
       if (!adminUser && idClean === 'wesleydani72@gmail.com') {
-        const novoAdmin: AdminUser = {
+        const novoAdmin = {
           id: 'admin_wesley',
           role: 'admin',
           nome: 'Wesley Pereira Ferreira',
@@ -81,17 +81,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           passwordCreated: true,
           foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
           criadoEm: '2026-06-01',
-        };
+        } as AdminUser; // Força como AdminUser para evitar erros de excesso de propriedades lógicas
+        
         try {
-          saveUser(novoAdmin);
+          saveUser(novoAdmin as AnyUser);
         } catch (e) {
           console.warn("Erro ao registrar admin Wesley dinâmico:", e);
         }
-        adminUser = novoAdmin;
+        adminUser = novoAdmin as AnyUser;
       }
       // Mantém a compatibilidade com o antigo caso ele ainda precise logar temporariamente
       else if (!adminUser && idClean === 'jl6568402@gmail.com') {
-        const novoAdmin: AdminUser = {
+        const novoAdmin = {
           id: 'admin_1',
           role: 'admin',
           nome: 'Administrador Geral',
@@ -102,13 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           passwordCreated: true,
           foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
           criadoEm: '2026-06-01',
-        };
+        } as AdminUser;
+        
         try {
-          saveUser(novoAdmin);
+          saveUser(novoAdmin as AnyUser);
         } catch (e) {
           console.warn("Erro ao registrar admin antigo dinâmico:", e);
         }
-        adminUser = novoAdmin;
+        adminUser = novoAdmin as AnyUser;
       }
       
       if (!adminUser) {
@@ -120,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       localStorage.setItem(SESSION_KEY, adminUser.id);
-      setCurrentUser(adminUser as any);
+      setCurrentUser(adminUser as AnyUser);
       return { sucesso: true };
     }
 
@@ -158,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               pontoReferencia: clientDoc.pontoReferencia || 'Não informado',
               criadoEm: clientDoc.criadoEm || new Date().toISOString().split('T')[0],
               foto: clientDoc.foto || ''
-            };
+            } as AnyUser;
             
             saveUser(fullClientObj);
 
@@ -242,12 +244,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const user = users.find(u => u.id === userId);
     if (!user) return { sucesso: false, erro: 'Usuário não encontrado.' };
 
-    const updated: AnyUser = {
+    // Forma segura e limpa de construir o objeto de atualização sem injetar chaves ilegais em tipos específicos do TypeScript
+    const baseUpdated = {
       ...user,
       senha: novaSenha,
-      senha_hash: user.role === 'mototaxista' ? hashSenha(novaSenha) : undefined,
       passwordCreated: true,
     };
+
+    const updated = (
+      user.role === 'mototaxista' 
+        ? { ...baseUpdated, senha_hash: hashSenha(novaSenha) } 
+        : baseUpdated
+    ) as AnyUser;
 
     saveUser(updated);
     localStorage.setItem(SESSION_KEY, updated.id);
@@ -261,7 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...currentUser,
       ...dados,
       cadastroCompleto: true,
-    };
+    } as AnyUser;
     saveUser(updated);
     setCurrentUser(updated);
   };
