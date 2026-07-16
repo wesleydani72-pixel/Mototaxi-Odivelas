@@ -1,6 +1,0 @@
-{
-  "name": "MotoTáxi",
-  "description": "Aplicativo completo de solicitação e gestão de Moto-Táxi em tempo real com painéis exclusivos para Administradores, Mototaxistas e Clientes.",
-  "requestFramePermissions": ["camera", "geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
