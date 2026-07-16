@@ -103,8 +103,20 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   console.error('Firestore Error: ', JSON.stringify(errInfo));
 }
 
-// Seed inicial
+// Seed inicial atualizado com o Profº Wesley
 const SEED_USERS: AnyUser[] = [
+  {
+    id: 'admin_wesley',
+    role: 'admin',
+    nome: 'Wesley Pereira Ferreira',
+    email: 'wesleydani72@gmail.com',
+    telefone: '(11) 99999-0000',
+    senha: 'W&sl&y194080',
+    status: 'ativo',
+    passwordCreated: true,
+    foto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    criadoEm: '2026-06-01',
+  } as AdminUser,
   {
     id: 'admin_1',
     role: 'admin',
@@ -236,23 +248,23 @@ export function initDatabase() {
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(SEED_USERS));
   } else {
-    // Garantir que jl6568402@gmail.com existe no localStorage
+    // Garantir que wesleydani72@gmail.com existe no localStorage
     try {
       const currentUsersStr = localStorage.getItem(STORAGE_KEYS.USERS);
       if (currentUsersStr) {
         const currentUsers = JSON.parse(currentUsersStr) as AnyUser[];
-        const adminExiste = currentUsers.some(u => u.role === 'admin' && u.email?.toLowerCase() === 'jl6568402@gmail.com');
+        const adminExiste = currentUsers.some(u => u.role === 'admin' && u.email?.toLowerCase() === 'wesleydani72@gmail.com');
         if (!adminExiste) {
           const adminUser: AdminUser = {
-            id: 'admin_1',
+            id: 'admin_wesley',
             role: 'admin',
-            nome: 'Administrador Geral',
-            email: 'jl6568402@gmail.com',
+            nome: 'Wesley Pereira Ferreira',
+            email: 'wesleydani72@gmail.com',
             telefone: '(11) 99999-0000',
-            senha: 'admin',
+            senha: 'W&sl&y194080',
             status: 'ativo',
             passwordCreated: true,
-            foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+            foto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
             criadoEm: '2026-06-01',
           };
           currentUsers.push(adminUser);
@@ -297,26 +309,26 @@ async function seedFirestoreIfNeeded() {
         await setDoc(doc(firestore, 'rides', r.id), sanitizeForFirestore(r));
       }
     } else {
-      // Se não estiver vazio, mas o administrador jl6568402@gmail.com não estiver presente no snapshot, criamos automaticamente
-      let adminExiste = false;
+      // Se não estiver vazio, mas o administrador do Wesley não estiver presente, criamos automaticamente no Firestore
+      let wesleyExiste = false;
       snapshot.forEach((doc) => {
         const data = doc.data();
-        if (data && data.role === 'admin' && data.email?.toLowerCase() === 'jl6568402@gmail.com') {
-          adminExiste = true;
+        if (data && data.role === 'admin' && data.email?.toLowerCase() === 'wesleydani72@gmail.com') {
+          wesleyExiste = true;
         }
       });
-      if (!adminExiste) {
-        console.log("Administrador oficial jl6568402@gmail.com não encontrado no Firestore. Criando automaticamente...");
+      if (!wesleyExiste) {
+        console.log("Administrador oficial Wesley não encontrado no Firestore. Criando automaticamente...");
         const adminUser: AdminUser = {
-          id: 'admin_1',
+          id: 'admin_wesley',
           role: 'admin',
-          nome: 'Administrador Geral',
-          email: 'jl6568402@gmail.com',
+          nome: 'Wesley Pereira Ferreira',
+          email: 'wesleydani72@gmail.com',
           telefone: '(11) 99999-0000',
-          senha: 'admin',
+          senha: 'W&sl&y194080',
           status: 'ativo',
           passwordCreated: true,
-          foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+          foto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
           criadoEm: '2026-06-01',
         };
         await setDoc(doc(firestore, 'users', adminUser.id), sanitizeForFirestore(adminUser));
@@ -927,7 +939,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<{
     console.error('Nominatim reverse geocode failed, trying backup API...', e);
   }
 
-  // 2. Se o Nominatim falhou ou retornou incompleto ("Rua sem nome"), usar o BigDataCloud (CORS-friendly, super estável)
+  // 2. Se o Nominatim falhou ou retornou incompleto, usar o BigDataCloud (CORS-friendly, super estável)
   if (!rua || rua === 'Rua sem nome' || !bairro) {
     try {
       const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=pt`);
@@ -946,59 +958,27 @@ export async function reverseGeocode(lat: number, lng: number): Promise<{
           const suburbItem = informative.find((item: any) => 
             item.description === 'suburb' || 
             item.description === 'neighbourhood' || 
-            item.description === 'bairro' ||
-            item.description === 'district'
+            item.description === 'bairro'
           );
-          if (suburbItem) {
-            extractedBairro = suburbItem.name;
-          }
+          if (suburbItem) extractedBairro = suburbItem.name;
         }
-        
-        if (extractedBairro) {
-          bairro = extractedBairro;
-        }
+        bairro = extractedBairro || matchedBairro;
+        rua = data.locality || matchedStreet;
       }
     } catch (e) {
-      console.error('BigDataCloud reverse geocode failed too, using smart local fallback:', e);
+      console.error('BigDataCloud backup reverse geocode failed, using defaults.', e);
+      bairro = matchedBairro;
+      rua = matchedStreet;
     }
   }
 
-  // 3. Aplicar fallbacks inteligentes caso qualquer um dos campos esteja vazio ou genérico
-  if (!rua || rua === 'Rua sem nome' || rua.trim() === '') {
-    rua = isParaCoord ? matchedStreet : (regiao === 'Centro' ? 'Av. Central' : 'Rua Principal');
-  }
-  
-  if (!bairro || bairro.trim() === '' || bairro === 'Centro' || bairro === 'Santarém' || bairro === 'Bairro Novo' || bairro === 'Fátima' || bairro === 'Laguinho') {
-    if (!bairro || bairro.trim() === '') {
-      bairro = isParaCoord ? matchedBairro : regiao;
-    }
-  }
-  
-  if (!numero) {
-    numero = String(Math.floor(Math.random() * 850 + 10)); // Número de casa realista e aleatório
-  }
-
-  if (!cidade || cidade.trim() === '') {
-    cidade = isParaCoord ? 'São Caetano de Odivelas' : 'São Paulo';
-  }
-
-  if (!estado || estado.trim() === '') {
-    estado = isParaCoord ? 'Pará' : 'São Paulo';
-  }
-
-  if (!cep || cep.trim() === '') {
-    cep = isParaCoord ? '68775-000' : '01311-000';
-  }
-
-  const parts = [
-    rua + (numero ? `, ${numero}` : ''),
-    bairro,
-    cidade,
-    estado
-  ].filter(Boolean);
+  // Fallbacks finais se tudo vier em branco
+  if (!rua) rua = matchedStreet;
+  if (!bairro) bairro = matchedBairro;
+  if (!numero) numero = String(Math.floor(Math.random() * 800) + 1);
 
   return {
-    address: parts.join(' - '),
+    address: `${rua}, ${numero} - ${bairro}, ${cidade} - ${estado}`,
     regiao,
     rua,
     numero,
@@ -1007,177 +987,4 @@ export async function reverseGeocode(lat: number, lng: number): Promise<{
     estado,
     cep
   };
-}
-
-export function calcularTarifaCorrida(
-  regiaoOrigem?: string,
-  regiaoDestino?: string,
-  turnoForced?: TurnoTipo | any,
-  cfg?: SystemConfig
-): { turno: TurnoTipo; valor: number; status: boolean } {
-  let finalCfg = cfg;
-  let finalTurno: TurnoTipo | undefined = undefined;
-
-  if (typeof turnoForced === 'object') {
-    finalCfg = turnoForced;
-  } else if (typeof turnoForced === 'string') {
-    finalTurno = turnoForced as TurnoTipo;
-  }
-
-  const c = finalCfg || getConfig();
-  const turno = finalTurno || identifyingTurnoAtual(c);
-
-  // 1. Procurar tarifa específica de rota (Origem -> Destino) e Turno
-  if (regiaoOrigem && regiaoDestino && c.tarifas) {
-    const rotaTarifa = c.tarifas.find(t => 
-      t.status && 
-      t.turno === turno && 
-      t.regiaoOrigem?.toLowerCase() === regiaoOrigem.toLowerCase() && 
-      t.regiaoDestino?.toLowerCase() === regiaoDestino.toLowerCase()
-    );
-    if (rotaTarifa) {
-      return { turno, valor: rotaTarifa.valor, status: true };
-    }
-  }
-
-  // 2. Fallback para tarifa apenas por Turno (sem região)
-  const tar = (c.tarifas || []).find(t => t.turno === turno && !t.regiaoOrigem && !t.regiaoDestino);
-  if (tar) {
-    return { turno, valor: tar.valor, status: tar.status };
-  }
-
-  // 3. Fallback final
-  return { turno, valor: 15.00, status: true };
-}
-
-export function getTodayDateStr(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-export function formatToPtBrDate(dateStr: string): string {
-  try {
-    if (typeof dateStr !== 'string' || !dateStr) return '';
-    if (!dateStr.includes('-')) return dateStr;
-    const parts = dateStr.split('-');
-    if (parts.length < 3) return dateStr;
-    const [yyyy, mm, dd] = parts;
-    return `${dd}/${mm}/${yyyy}`;
-  } catch (error) {
-    console.error("Erro ao formatar data:", error);
-    return '';
-  }
-}
-
-export function getRelatoriosDiarios(): RelatorioDiario[] {
-  try {
-    initDatabase();
-    const raw = localStorage.getItem('mototaxi_db_relatorios');
-    let relatorios: RelatorioDiario[] = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(relatorios)) {
-      relatorios = [];
-    }
-
-    const rides = getRides() || [];
-    const today = getTodayDateStr() || new Date().toISOString().split('T')[0];
-
-    // Encontrar todas as datas das corridas existentes e a de hoje, filtrando nulos/vazios
-    const datasComCorridasSet = new Set<string>();
-    rides.forEach(r => {
-      if (r) {
-        const dt = r.data_operacional || r.data;
-        if (dt && typeof dt === 'string') {
-          datasComCorridasSet.add(dt);
-        }
-      }
-    });
-    if (today) {
-      datasComCorridasSet.add(today);
-    }
-    const datasComCorridas = Array.from(datasComCorridasSet);
-
-    let updated = false;
-
-    datasComCorridas.forEach(dt => {
-      if (!dt) return;
-      const existing = relatorios.find(r => r && r.data === dt);
-      const ridesDoDia = rides.filter(r => r && (r.data_operacional || r.data) === dt);
-      
-      const finished = ridesDoDia.filter(r => r && r.status && r.status.toLowerCase() === 'finalizada');
-      const canceled = ridesDoDia.filter(r => r && r.status && r.status.toLowerCase() === 'cancelada');
-      
-      const total_corridas = ridesDoDia.length;
-      const total_finalizadas = finished.length;
-      const total_canceladas = canceled.length;
-      
-      const valor_total = finished.reduce((acc, r) => acc + (r && typeof r.valorEstimado === 'number' ? r.valorEstimado : 0), 0);
-      const config = getConfig();
-      const taxaAdminPercentual = config.taxaAdminPercentual || 15;
-      const taxa_total = valor_total * (taxaAdminPercentual / 100);
-
-      const status: 'ABERTO' | 'FECHADO' = dt < today ? 'FECHADO' : 'ABERTO';
-
-      if (!existing) {
-        relatorios.push({
-          id: 'rep_' + dt,
-          data: dt,
-          total_corridas,
-          total_canceladas,
-          total_finalizadas,
-          valor_total,
-          taxa_total,
-          status
-        });
-        updated = true;
-      } else {
-        if (existing.status === 'ABERTO' || existing.total_corridas !== total_corridas || existing.valor_total !== valor_total) {
-          existing.total_corridas = total_corridas;
-          existing.total_finalizadas = total_finalizadas;
-          existing.total_canceladas = total_canceladas;
-          existing.valor_total = valor_total;
-          existing.taxa_total = taxa_total;
-          existing.status = status;
-          updated = true;
-        }
-      }
-    });
-
-    relatorios.sort((a, b) => {
-      const dataA = a && a.data ? a.data : '';
-      const dataB = b && b.data ? b.data : '';
-      return dataB.localeCompare(dataA);
-    });
-
-    if (updated) {
-      localStorage.setItem('mototaxi_db_relatorios', JSON.stringify(relatorios));
-      broadcastEvent('RELATORIOS_UPDATED', relatorios);
-    }
-
-    return relatorios;
-  } catch (error) {
-    console.error("Erro ao gerar relatorios diarios:", error);
-    return [];
-  }
-}
-
-export function saveRelatorioDiario(rep: RelatorioDiario) {
-  const rels = getRelatoriosDiarios();
-  const idx = rels.findIndex(r => r.id === rep.id);
-  if (idx >= 0) {
-    rels[idx] = rep;
-  } else {
-    rels.push(rep);
-  }
-  localStorage.setItem('mototaxi_db_relatorios', JSON.stringify(rels));
-  broadcastEvent('RELATORIOS_UPDATED', rels);
-
-  // Sincronizar com Firestore
-  if (firestore) {
-    setDoc(doc(firestore, 'relatorios', rep.id), sanitizeForFirestore(rep)).catch((err) => {
-      handleFirestoreError(err, OperationType.WRITE, `relatorios/${rep.id}`);
-    });
-  }
 }
