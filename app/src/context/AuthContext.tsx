@@ -44,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Ouvir atualizações real-time do usuário atual
     const unsubscribe = subscribeRealtime((event, payload) => {
       if (event === 'USER_UPDATED' && payload && currentUser && payload.id === currentUser.id) {
         if (payload.status === 'bloqueado' || payload.status === 'inativo') {
@@ -64,37 +63,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const users = getUsers();
     const idClean = identificador.trim().toLowerCase();
 
-    // Tratamento dinâmico para os Administradores Autorizados
     if (roleDesejada === 'admin') {
       let adminUser = users.find(u => u.role === 'admin' && u.email?.toLowerCase() === idClean);
       
-      // Se for o seu novo e-mail e ele ainda não estiver no banco local, criamos o 'admin_wesley'
       if (!adminUser && idClean === 'wesleydani72@gmail.com') {
         const novoAdmin = {
           id: 'admin_wesley',
-          role: 'admin',
+          role: 'admin' as const,
           nome: 'Wesley Pereira Ferreira',
           email: 'wesleydani72@gmail.com',
           telefone: '(11) 99999-0000',
-          senha: 'admin', // Altere para a senha padrão provisória que desejar
+          senha: 'admin',
           status: 'ativo',
           passwordCreated: true,
           foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
           criadoEm: '2026-06-01',
-        } as AdminUser; // Força como AdminUser para evitar erros de excesso de propriedades lógicas
+        };
         
         try {
-          saveUser(novoAdmin as AnyUser);
+          saveUser(novoAdmin as unknown as AnyUser);
         } catch (e) {
-          console.warn("Erro ao registrar admin Wesley dinâmico:", e);
+          console.warn("Erro ao registrar admin Wesley:", e);
         }
-        adminUser = novoAdmin as AnyUser;
+        adminUser = novoAdmin as unknown as AnyUser;
       }
-      // Mantém a compatibilidade com o antigo caso ele ainda precise logar temporariamente
       else if (!adminUser && idClean === 'jl6568402@gmail.com') {
         const novoAdmin = {
           id: 'admin_1',
-          role: 'admin',
+          role: 'admin' as const,
           nome: 'Administrador Geral',
           email: 'jl6568402@gmail.com',
           telefone: '(11) 99999-0000',
@@ -103,14 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           passwordCreated: true,
           foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
           criadoEm: '2026-06-01',
-        } as AdminUser;
+        };
         
         try {
-          saveUser(novoAdmin as AnyUser);
+          saveUser(novoAdmin as unknown as AnyUser);
         } catch (e) {
-          console.warn("Erro ao registrar admin antigo dinâmico:", e);
+          console.warn("Erro ao registrar admin antigo:", e);
         }
-        adminUser = novoAdmin as AnyUser;
+        adminUser = novoAdmin as unknown as AnyUser;
       }
       
       if (!adminUser) {
@@ -126,7 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { sucesso: true };
     }
 
-    // Busca direta na coleção 'clientes' do Firestore
     if (roleDesejada === 'cliente' && firestore) {
       try {
         const { collection, getDocs, query, where } = await import('firebase/firestore');
@@ -136,50 +131,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-          let clientDoc: any = null;
+          let clientData: Record<string, unknown> | null = null;
           snapshot.forEach(doc => {
-            clientDoc = { ...doc.data(), id: doc.id };
+            clientData = { ...doc.data(), id: doc.id };
           });
           
-          if (clientDoc) {
-            if (clientDoc.senha !== senhaDigitada) {
+          if (clientData) {
+            const tempClient = clientData as Record<string, string>;
+            if (tempClient.senha !== senhaDigitada) {
               return { sucesso: false, erro: 'Senha incorreta.' };
             }
-            if (clientDoc.status === 'bloqueado' || clientDoc.status === 'inativo') {
+            if (tempClient.status === 'bloqueado' || tempClient.status === 'inativo') {
               return { sucesso: false, erro: 'Este usuário está bloqueado ou inativo no sistema.' };
             }
 
             const fullClientObj = {
-              ...clientDoc,
+              id: tempClient.id,
               role: 'cliente' as const,
+              nome: tempClient.nome || 'Cliente',
+              email: tempClient.email || '',
+              telefone: tempClient.telefone || '',
+              senha: tempClient.senha || '',
+              status: tempClient.status || 'ativo',
               passwordCreated: true,
               cadastroCompleto: true,
-              cidade: clientDoc.cidade || 'São Caetano de Odivelas - PA',
-              bairro: clientDoc.bairro || 'Não informado',
-              endereco: clientDoc.endereco || 'Não informado',
-              pontoReferencia: clientDoc.pontoReferencia || 'Não informado',
-              criadoEm: clientDoc.criadoEm || new Date().toISOString().split('T')[0],
-              foto: clientDoc.foto || ''
-            } as AnyUser;
+              cidade: tempClient.cidade || 'São Caetano de Odivelas - PA',
+              bairro: tempClient.bairro || 'Não informado',
+              endereco: tempClient.endereco || 'Não informado',
+              pontoReferencia: tempClient.pontoReferencia || 'Não informado',
+              criadoEm: tempClient.criadoEm || new Date().toISOString().split('T')[0],
+              foto: tempClient.foto || ''
+            };
             
-            saveUser(fullClientObj);
+            saveUser(fullClientObj as unknown as AnyUser);
 
-            localStorage.setItem(SESSION_KEY, clientDoc.id);
-            setCurrentUser(fullClientObj);
+            localStorage.setItem(SESSION_KEY, tempClient.id);
+            setCurrentUser(fullClientObj as unknown as AnyUser);
             return { sucesso: true };
           }
         }
       } catch (err) {
-        console.warn("Erro ao buscar diretamente na coleção 'clientes' do Firestore:", err);
+        console.warn("Erro ao buscar cliente no Firestore:", err);
       }
     }
 
     const user = users.find(u => {
       if (u.role !== roleDesejada) return false;
       if (u.role === 'mototaxista') {
-        return u.placa.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === idClean.replace(/[^a-zA-Z0-9]/g, '');
+        const placaClean = u.placa.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const idCleanPlaca = idClean.replace(/[^a-zA-Z0-9]/g, '');
+        return placaClean === idCleanPlaca;
       } else {
-        return (u as any).email?.toLowerCase() === idClean;
+        const uEmail = (u as Record<string, unknown>).email as string | undefined;
+        return uEmail?.toLowerCase() === idClean;
       }
     });
 
@@ -244,7 +248,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const user = users.find(u => u.id === userId);
     if (!user) return { sucesso: false, erro: 'Usuário não encontrado.' };
 
-    // Forma segura e limpa de construir o objeto de atualização sem injetar chaves ilegais em tipos específicos do TypeScript
     const baseUpdated = {
       ...user,
       senha: novaSenha,
