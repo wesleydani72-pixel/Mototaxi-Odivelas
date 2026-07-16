@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Ouvir atualizações real-time do usuário atual (ex: status mudou por admin ou corrida finalizou)
+    // Ouvir atualizações real-time do usuário atual
     const unsubscribe = subscribeRealtime((event, payload) => {
       if (event === 'USER_UPDATED' && payload && currentUser && payload.id === currentUser.id) {
         if (payload.status === 'bloqueado' || payload.status === 'inativo') {
@@ -64,11 +64,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const users = getUsers();
     const idClean = identificador.trim().toLowerCase();
 
-    // Tratamento pro login do Administrador Oficial
+    // Tratamento dinâmico para os Administradores Autorizados
     if (roleDesejada === 'admin') {
       let adminUser = users.find(u => u.role === 'admin' && u.email?.toLowerCase() === idClean);
       
-      if (!adminUser && idClean === 'jl6568402@gmail.com') {
+      // Se for o seu novo e-mail e ele ainda não estiver no banco local, criamos o 'admin_wesley'
+      if (!adminUser && idClean === 'wesleydani72@gmail.com') {
+        const novoAdmin: AdminUser = {
+          id: 'admin_wesley',
+          role: 'admin',
+          nome: 'Wesley Pereira Ferreira',
+          email: 'wesleydani72@gmail.com',
+          telefone: '(11) 99999-0000',
+          senha: 'admin', // Altere para a senha padrão provisória que desejar
+          status: 'ativo',
+          passwordCreated: true,
+          foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+          criadoEm: '2026-06-01',
+        };
+        try {
+          saveUser(novoAdmin);
+        } catch (e) {
+          console.warn("Erro ao registrar admin Wesley dinâmico:", e);
+        }
+        adminUser = novoAdmin;
+      }
+      // Mantém a compatibilidade com o antigo caso ele ainda precise logar temporariamente
+      else if (!adminUser && idClean === 'jl6568402@gmail.com') {
         const novoAdmin: AdminUser = {
           id: 'admin_1',
           role: 'admin',
@@ -84,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           saveUser(novoAdmin);
         } catch (e) {
-          console.warn("Erro ao registrar admin dinâmico:", e);
+          console.warn("Erro ao registrar admin antigo dinâmico:", e);
         }
         adminUser = novoAdmin;
       }
@@ -102,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { sucesso: true };
     }
 
-    // Busca direta na coleção 'clientes' do Firestore para garantir login atualizado do cliente
+    // Busca direta na coleção 'clientes' do Firestore
     if (roleDesejada === 'cliente' && firestore) {
       try {
         const { collection, getDocs, query, where } = await import('firebase/firestore');
@@ -125,7 +147,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return { sucesso: false, erro: 'Este usuário está bloqueado ou inativo no sistema.' };
             }
 
-            // Garantir que ele também está no cache local e em 'users'
             const fullClientObj = {
               ...clientDoc,
               role: 'cliente' as const,
@@ -203,7 +224,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { sucesso: false, erro: 'Este usuário está bloqueado ou inativo no sistema.' };
     }
 
-    // Identificar primeiro acesso (senha não criada)
     if (!user.passwordCreated || !user.senha) {
       return { sucesso: false, precisaCriarSenha: true, userId: user.id };
     }
