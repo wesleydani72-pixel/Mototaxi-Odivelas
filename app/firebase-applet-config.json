@@ -1,4 +1,3 @@
-// Substitua o conteúdo atual por este:
 const firebaseConfig = {
   apiKey: "AIzaSyCzrEkgDMQ3k-qGmcnhe_oid6tmqU8-SUY",
   authDomain: "mototaxi-odivelas.firebaseapp.com",
