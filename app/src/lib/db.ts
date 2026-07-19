@@ -702,7 +702,13 @@ export function getRideById(id: string): Ride | undefined {
   return getRides().find(r => r.id === id);
 }
 
-export function saveRide(ride: Ride) {
+export function saveRide(ride: Ride, loggedUserId: string, loggedUserRole: string) {
+  // Trava de segurança: apenas admin ou o dono da corrida podem salvar
+  if (loggedUserRole !== 'admin' && ride.clienteId !== loggedUserId) {
+    console.error("Acesso negado: Você não tem permissão para alterar este pedido.");
+    return;
+  }
+
   const rides = getRides();
   
   const data_operacional = ride.data_operacional || ride.data || new Date().toISOString().split('T')[0];
