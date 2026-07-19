@@ -410,7 +410,7 @@ export function ClientDashboard() {
       fotoEncomenda: activeTab === 'entrega' && entregaTipo === 'levar' ? fotoEncomendaBase64 : undefined,
     };
 
-    saveRide(nova);
+    saveRide(nova, cli.id, cli.role);
     setConfirmandoResumo(null);
     setIsZonaRural(false);
     setDetalhesZonaRural('');
@@ -447,7 +447,7 @@ export function ClientDashboard() {
       status: 'CANCELADA',
       atualizadoEm: Date.now()
     };
-    saveRide(atualizada);
+    saveRide(atualizada, cli.id, cli.role);
 
     if (corridaAtiva.mototaxistaId) {
       addNotification({
@@ -467,7 +467,7 @@ export function ClientDashboard() {
       clienteConfirmouValor: true,
       atualizadoEm: Date.now()
     };
-    saveRide(atualizada);
+    saveRide(atualizada, cli.id, cli.role);
 
     if (corridaAtiva.mototaxistaId) {
       addNotification({
